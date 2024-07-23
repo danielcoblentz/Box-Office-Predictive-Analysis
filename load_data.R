@@ -2,46 +2,139 @@
 library(tidyverse)
 library(broom)
 library(scales)
+library(ggplot2)
 
-# Define file paths
-base_path <- "C:/Users/dan/OneDrive/Desktop/data/"
-annual_ticket_sales_path <- paste0(base_path, "AnnualTicketSales.csv")
-highest_grossers_path <- paste0(base_path, "HighestGrossers.csv")
-popular_creative_types_path <- paste0(base_path, "PopularCreativeTypes.csv")
-top_distributors_path <- paste0(base_path, "TopDistributors.csv")
-top_genres_path <- paste0(base_path, "TopGenres.csv")
-top_grossing_ratings_path <- paste0(base_path, "TopGrossingRatings.csv")
-top_grossing_sources_path <- paste0(base_path, "TopGrossingSources.csv")
-top_production_methods_path <- paste0(base_path, "TopProductionMethods.csv")
-wide_releases_count_path <- paste0(base_path, "WideReleasesCount.csv")
+# Load and preview the Annual Ticket Sales data
+movies_spec <- read_csv("AnnualTicketSales.csv")
+print(head(movies_spec))
 
-# Load datasets
-annual_ticket_sales <- read.csv(annual_ticket_sales_path)
-highest_grossers <- read.csv(highest_grossers_path)
-popular_creative_types <- read.csv(popular_creative_types_path)
-top_distributors <- read.csv(top_distributors_path)
-top_genres <- read.csv(top_genres_path)
-top_grossing_ratings <- read.csv(top_grossing_ratings_path)
-top_grossing_sources <- read.csv(top_grossing_sources_path)
-top_production_methods <- read.csv(top_production_methods_path)
-wide_releases_count <- read.csv(wide_releases_count_path)
+# Load and preview the Highest Grossers data
+highest_grossers <- read_csv("HighestGrossers.csv")
+print(head(highest_grossers))
 
-# Display the first few rows of each dataset to verify they loaded correctly
-head(annual_ticket_sales)
-head(highest_grossers)
-head(popular_creative_types)
-head(top_distributors)
-head(top_genres)
-head(top_grossing_ratings)
-head(top_grossing_sources)
-head(top_production_methods)
-head(wide_releases_count)
+# Part 1: Distribution of gross earnings graph
+ggplot(data = movies_spec, mapping = aes(x = DomesticGross)) +
+  geom_histogram(binwidth = 40, fill = "blue", color = "black") +
+  labs(
+    title = "The Domestic Gross U.S Earnings of Hollywood Movies",
+    x = "Gross Income from Domestic (U.S) Viewers (millions of dollars)",
+    y = "Number of Movies"
+  ) +
+  theme_minimal()
 
-# Analyze the highestGrossers data
-# Assuming the column containing domestic gross earnings is named 'DomesticGross'
-# Adjust the column name if different
-ggplot(highest_grossers, aes(x = DomesticGross)) +
-  geom_histogram(binwidth = 50e6, fill = "blue", color = "white") +
-  labs(title = "Distribution of Domestic Gross Earnings",
-       x = "Domestic Gross Earnings (in millions)",
-       y = "Frequency")
+# Calculate statistics to describe the center and spread of the variable
+highest_grossers %>%
+  summarize(
+    Mean = mean(`TOTAL FOR YEAR`, na.rm = TRUE),
+    SD = sd(`TOTAL FOR YEAR`, na.rm = TRUE),
+    Q05 = quantile(`TOTAL FOR YEAR`, 0.05, na.rm = TRUE),
+    Q1 = quantile(`TOTAL FOR YEAR`, 0.25, na.rm = TRUE),
+    Median = median(`TOTAL FOR YEAR`, na.rm = TRUE),
+    Q3 = quantile(`TOTAL FOR YEAR`, 0.75, na.rm = TRUE)
+  )
+
+# Part 2: explore linear models for predicting domestic gross income over time
+
+# Model 1: The effect of opening weekend gross income on the domestic gross earnings ---------------------------------------------------------------------------------
+fit <- lm(DomesticGross ~ OpeningWeekend, data = movies_spec)
+summary(fit)
+ggplot(data = movies_spec, aes(x = OpeningWeekend, y = DomesticGross)) +
+  geom_point(shape = 1, size = 1, alpha = 0.75) +
+  labs(
+    title = "The Effect of Opening Weekend Gross Income on the Domestic Gross Earnings of Hollywood Movies",
+    x = "Opening Weekend Gross Income (millions of dollars)",
+    y = "Domestic Gross Earnings (millions of dollars)"
+  ) +
+  geom_abline(intercept = coef(fit)[1], slope = coef(fit)[2], color = "forestgreen")
+
+
+
+# Model 2: The effect of audience scores on the domestic gross earnings of hollywood movies ------------------------------------------------------------------------------------
+# Fit the linear regression model
+fit1 <- lm(DomesticGross ~ AudienceScore, data = movies)
+
+# Summarize the model
+summary(fit1)
+
+# Visualize the data and the regression line
+ggplot(data = movies, mapping = aes(x = AudienceScore, y = DomesticGross)) +
+  geom_point(shape = 1, size = 1, alpha = 0.75) +
+  labs(
+    title = "The Effect of Audience Scores on the Domestic Gross Earnings of Hollywood Movies in 2017",
+    x = "Audience Score",
+    y = "Domestic Gross Earnings (millions of dollars)") +
+  geom_abline(intercept = coef(fit1)[1], slope = coef(fit1)[2], color = "forestgreen") +
+  scale_y_continuous(labels = label_dollar())
+
+# Model 3: The effect of production budget on the domestic gross earnings of Hollywood movies --------------------------------------------------------------------------------------------
+# Fit the linear regression model
+fit2 <- lm(DomesticGross ~ Budget, data = movies)
+
+# Summarize the model
+summary(fit2)
+
+# Visualize the data and the regression line
+ggplot(data = movies, mapping = aes(x = Budget, y = DomesticGross)) +
+  geom_point(shape = 1, size = 1, alpha = 0.75) +
+  labs(
+    title = "The Effect of Production Budget on the Domestic Gross Earnings of Hollywood Movies",
+    x = "Production Budget (millions of dollars)",
+    y = "Domestic Gross Earnings (millions of dollars)"
+  ) +
+  geom_abline(intercept = coef(fit2)[1], slope = coef(fit2)[2], color = "forestgreen") +
+  scale_y_continuous(labels = label_dollar())
+
+
+
+# Explore the best model of the 3 above ------------------------------------------------------------------
+    ggplot(data = movies, aes(x = OpeningWeekend, y = DomesticGross)) +
+      geom_point(shape = 1, size = 1, alpha = 0.75) +
+      labs(
+        title = "The Effect of Opening Weekend Gross Income on the Domestic Gross Earnings of Hollywood Movies",
+        x = "Opening Weekend Gross Income (millions of dollars)",
+        y = "Domestic Gross Earnings (millions of dollars)"
+      ) +
+      geom_abline(intercept = coef(fit)[1], slope = coef(fit)[2], color = "forestgreen")
+
+
+#histogram for residuals
+
+    movies <- fit %>%
+    augment(moveis)
+    ggplot(data = movies, mapping = aes(x = .resid)) + geom_histogram()
+
+
+#residuals vs fitted values
+    ggplot(data = movies, mapping = aes(x = OpeningWeekend, y = .resid)) + geom_point(shape=1, size=1, alpha = 0.75 ) + geom_abline(intercept = 0, slope = 0, linetype = "twodash") +
+    labs(title = "Residuals verus fitted values" x = "Fitted values (millions of dollars)", y= "Residuals(millions of dollars)")
+
+#simulating data sets with normal errors for best modal
+
+  simulated_data <- simulate(fit, nsim = 19)
+  OpeningWeekend <- movies %>%
+    pull(OpeningWeekend)
+
+     DomesticGross <- movies %>%
+    pull(DomesticGross)
+
+     OpeningWeekend <- movies %>%
+    drop_na(OpeningWeekend) %>%
+    pull(OpeningWeekend)
+
+    simulated_data <- simulated_data %>%
+    mutate(OpeningWeekend = OpeningWeekend) %>%
+    mutate(sim_0 = DomesticGross) %>%
+    pivot_longer(cols = starts_with("sim"), cols_vary = "slowest")
+
+    ggplot(data = simulated_data, mapping = aes(x = OpeningWeekend, y = value)) + geom_point(shape =1, size=1) + facet_wrap(~name)
+
+
+    #part 5 make and evaluate predictions with the modal
+
+
+#repeat prediction + residual calcuation for each movie to use the modals on for opening weekend.
+
+    # sample prediction for 30 million in gross income on opening weekend (movie name)
+    7.9310 + (2.8638*30.0)
+
+    #Residual = Observed - Predicted
