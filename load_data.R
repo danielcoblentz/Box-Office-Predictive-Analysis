@@ -3,14 +3,14 @@ library(tidyverse)
 library(broom)
 library(scales)
 library(ggplot2)
+library(multcomp)
 
-# Load and preview the Annual Ticket Sales data
+# Load and preview the annual ticket sales data & highest grossers dataset
 movies_spec <- read_csv("AnnualTicketSales.csv")
 print(head(movies_spec))
-
-# Load and preview the Highest Grossers data
 highest_grossers <- read_csv("HighestGrossers.csv")
 print(head(highest_grossers))
+print(unique(movies_spec$Genre))
 
 # Part 1: Distribution of gross earnings graph
 ggplot(data = movies_spec, mapping = aes(x = DomesticGross)) +
@@ -134,7 +134,41 @@ ggplot(data = movies, mapping = aes(x = Budget, y = DomesticGross)) +
 
 #repeat prediction + residual calcuation for each movie to use the modals on for opening weekend.
 
-    # sample prediction for 30 million in gross income on opening weekend (movie name)
-    7.9310 + (2.8638*30.0)
+    # sample prediction for 40 million in gross income on opening weekend (movie name)
+    7.9310 + (2.8638*40.0)
 
     #Residual = Observed - Predicted
+
+
+# part 6 Genre-based analysis ---------
+# Count movies and calculate average earnings per genre
+genre_stats <- movies_spec %>%
+  group_by(Genre) %>%
+  summarize(
+    Count = n(),
+    AverageEarnings = mean(DomesticGross, na.rm = TRUE),
+    .groups = 'drop'
+  )
+print(genre_stats)
+
+
+# Plot number of movies per genre
+ggplot(genre_stats, aes(x = reorder(Genre, Count), y = Count, fill = Genre)) +
+  geom_col() +
+  labs(title = "Number of Movies per Genre",
+       x = "Genre",
+       y = "Number of Movies") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# ANOVA to test differences in earnings by genre
+anova_result <- aov(DomesticGross ~ Genre, data = movies_spec)
+summary(anova_result)
+
+# Post-hoc Tukey HSD
+tukey_test <- glht(anova_result, linfct = mcp(Genre = "Tukey"))
+summary(tukey_test)
+
+# Extend an existing model to include genre
+fit_genre <- lm(DomesticGross ~ OpeningWeekend + Genre, data = movies_spec)
+summary(fit_genre)
