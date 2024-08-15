@@ -1,3 +1,7 @@
 # Box Office Predictive Analysis
 
-This project contains an R-based analysis of Hollywood box office data, focusing on factors that influence movie earnings such as opening weekends, audience scores, production budgets, and genres. Utilizing datasets like 'Annual Ticket Sales' and 'Highest Grossers', the project employs statistical methods and visualizations to explore and model the data. Key components include linear regression to predict domestic gross earnings and an in-depth genre analysis to understand genre-specific performance. Tools like ggplot2, tidyverse, and multcomp are integral for data manipulation, visualization, and statistical testing. The goal is to uncover insights into the predictive factors of box office success.
+Project Overview
+This project leverages R-based analysis to explore Hollywood box office data, focusing on the factors that influence movie earnings such as opening weekends, audience scores, production budgets, and genres. By analyzing datasets like 'Annual Ticket Sales' and 'Domestic Gross income', we employ robust statistical methods, linear regression and data visualizations to model and interpret the data to make accurate predictions.
+
+Data Source
+The primary dataset, "HollywoodMovies (1).csv," includes detailed attributes of movies such as Movie Title, Lead Studio, Rotten Tomatoes scores, Audience Scores, Genres, Theaters Open Week, Opening Weekend earnings, Domestic Gross, and many more, spanning several years of movie releases.
