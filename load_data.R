@@ -76,6 +76,20 @@ ggplot(data = movies_spec, aes(x = Budget, y = DomesticGross)) +
   geom_abline(intercept = coef(fit2)[1], slope = coef(fit2)[2], color = "deepskyblue4") +
   scale_y_continuous(labels = label_dollar())
 
+  #simulation data
+  # Simulate data from the fitted model (Example for Opening Weekend)
+simulated_data <- simulate(fit, nsim = 19)
+simulated_data <- as.data.frame(simulated_data) %>%
+  mutate(OpeningWeekend = movies_spec$OpeningWeekend) %>%
+  pivot_longer(cols = starts_with("sim"), names_to = "simulation", values_to = "simulated_gross")
+
+# Plotting the simulated data against the Opening Weekend earnings
+ggplot(simulated_data, aes(x = OpeningWeekend, y = simulated_gross)) +
+  geom_point(shape = 1, size = 1) +
+  labs(title = "Simulated Domestic Gross vs. Opening Weekend",
+       x = "Opening Weekend (millions)",
+       y = "Simulated Domestic Gross (millions)")
+
 # Genre-based analysis
 genre_stats <- movies_spec %>%
   group_by(Genre) %>%
@@ -96,13 +110,32 @@ ggplot(genre_stats, aes(x = reorder(Genre, Count), y = Count, fill = Genre)) +
   ) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# Example movies for prediction
+example_movies <- tibble(
+  Movie = c("21 Jump Street", "Big Miracle", "Ice Age: Continental Drift"),
+  OpeningWeekend = c(36.30, 7.76, 46.63)  # Opening weekend gross in millions
+)
 
-# ANOVA and post-hoc analysis
-anova_result <- aov(DomesticGross ~ Genre, data = movies_spec)
-summary(anova_result)
-tukey_test <- glht(anova_result, linfct = mcp(Genre = "Tukey"))
-summary(tukey_test)
+# Predict Domestic Gross using the linear model
+predicted_gross <- predict(fit, newdata = example_movies)
 
-# Extend an existing model to include genre as a factor
-fit_genre <- lm(DomesticGross ~ OpeningWeekend + Genre, data = movies_spec)
-summary(fit_genre)
+# Add predictions to the dataframe
+example_movies <- mutate(example_movies, PredictedGross = predicted_gross)
+
+# Calculate manual predictions using coefficients from the fitted model
+example_movies <- example_movies %>%
+  mutate(
+    ManualPrediction = coef(fit)[1] + coef(fit)[2] * OpeningWeekend
+  )
+
+# Output the results
+print(example_movies)
+
+# Plot predictions
+ggplot(example_movies, aes(x = Movie, y = PredictedGross, fill = Movie)) +
+  geom_col() +
+  geom_text(aes(label = round(PredictedGross, 2)), vjust = -0.5) +
+  labs(title = "Predicted Domestic Gross for Sample Movies",
+       x = "Movie",
+       y = "Predicted Gross (millions)") +
+  theme_minimal()
