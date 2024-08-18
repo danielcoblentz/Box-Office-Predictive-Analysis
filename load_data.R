@@ -110,6 +110,8 @@ ggplot(genre_stats, aes(x = reorder(Genre, Count), y = Count, fill = Genre)) +
   ) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+  
 # Example movies for prediction
 example_movies <- tibble(
   Movie = c("21 Jump Street", "Big Miracle", "Ice Age: Continental Drift"),
